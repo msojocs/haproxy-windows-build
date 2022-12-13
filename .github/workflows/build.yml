@@ -20,23 +20,18 @@ jobs:
     name: Build Base Packages
     runs-on: windows-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-        ARCH: ['x86_64']
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: 'haproxy/haproxy'
-          submodules: 'recursive'
-        run: |
-          git checkout 2.7.0
+          ref: 'v2.7.0'
+          path: 'haproxy'
+      - run: |
+          ls
       - name: Set up Cygwin
-        uses: egor-tensin/setup-cygwin@v3
+        uses: cygwin/cygwin-install-action@master
         with:
-          platform: x64
+          platform: x86_64
           packages: make gcc-core gcc-g++
 
       # Cygwin executables are added to PATH, so you can call them directly:
@@ -44,21 +39,30 @@ jobs:
           ls.exe -Al
           pwd.exe
 
-      # Alternatively, you can set Cygwin's bash as the shell to use:
+      - name: Make haproxy
+        run: |
+          cd haproxy
+          make TARGET=cygwin
+
       - run: |
-          # This is a real bash script!
-          basic() {
-              ls -Al
-              pwd
-          }
-          basic
-        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
-      
+          ls
+          ls c:
+          ls c:\cygwin
+          ls c:\cygwin\bin
+          mkdir release
+          cp haproxy\haproxy.exe release
+          cp C:\cygwin\bin\cygwin1.dll release
+          cp c:\cygwin\bin\cyggc-1.dll release
+          cp c:\cygwin\bin\cyggcc_s-seh-1.dll release
+          cp haproxy.cfg release
+          ls release
+          tar --version
+
       # - name: Release
       #   uses: softprops/action-gh-release@v1
       #   with:
       #     # note you'll typically need to create a personal access token
       #     # with permissions to create releases in the other repo
-      #     name: 2.7.0
+      #     name: v2.7.0
       #     tag_name: v2.7.0
       #     files: |
