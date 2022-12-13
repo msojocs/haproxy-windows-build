@@ -1,0 +1,64 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build Packages
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:        
+      - v*
+    branches: [ master, dev]
+  pull_request:
+    branches: [ master ]
+  # # Allows you to run this workflow manually from the Actions tab
+  # workflow_dispatch:
+
+jobs:
+  build-src:
+    name: Build Base Packages
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        ARCH: ['x86_64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: 'haproxy/haproxy'
+          submodules: 'recursive'
+        run: |
+          git checkout 2.7.0
+      - name: Set up Cygwin
+        uses: egor-tensin/setup-cygwin@v3
+        with:
+          platform: x64
+          packages: make gcc-core gcc-g++
+
+      # Cygwin executables are added to PATH, so you can call them directly:
+      - run: |
+          ls.exe -Al
+          pwd.exe
+
+      # Alternatively, you can set Cygwin's bash as the shell to use:
+      - run: |
+          # This is a real bash script!
+          basic() {
+              ls -Al
+              pwd
+          }
+          basic
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+      
+      # - name: Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     # note you'll typically need to create a personal access token
+      #     # with permissions to create releases in the other repo
+      #     name: 2.7.0
+      #     tag_name: v2.7.0
+      #     files: |
