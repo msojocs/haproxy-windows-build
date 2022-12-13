@@ -22,6 +22,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           repository: 'haproxy/haproxy'
           ref: 'v2.7.0'
