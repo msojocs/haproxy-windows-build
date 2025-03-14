@@ -12,8 +12,8 @@ on:
     branches: [ master, dev]
   pull_request:
     branches: [ master ]
-  # # Allows you to run this workflow manually from the Actions tab
-  # workflow_dispatch:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build-src:
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: 'haproxy/haproxy'
-          ref: 'v2.7.0'
+          ref: 'v3.1.0'
           path: 'haproxy'
       - name: Generate TAG
         id: Tag
@@ -88,7 +88,7 @@ jobs:
         with:
           # note you'll typically need to create a personal access token
           # with permissions to create releases in the other repo
-          name: v2.7.0
+          name: v3.1.0
           tag_name: ${{ steps.tag.outputs.tag }}
           files: |
             *.tar.gz
