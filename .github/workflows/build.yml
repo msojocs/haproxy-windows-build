@@ -22,23 +22,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
-        with:
-          repository: 'haproxy/haproxy'
-          ref: 'v3.1.0'
-          path: 'haproxy'
-      - name: Generate TAG
+      - name: Generate TAG Development
+        if: startsWith(github.ref, 'refs/heads/')
         id: Tag
         run: |
-          tag='continuous'
-          name='Continuous Build'
-          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
-            tag='${{ github.ref_name }}'
-            name='${{ github.ref_name }}'
-          fi
-          echo "tag result: $tag - $name"
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=name::$name"
+          echo "tag=continuous" >> $env:GITHUB_OUTPUT
+          echo "name=Continuous Build" >> $env:GITHUB_OUTPUT
+      - name: Generate TAG Release
+        if: startsWith(github.ref, 'refs/tags/')
+        id: Tag
+        run: |
+          echo "tag=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+          echo "name=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/checkout@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          repository: 'haproxy/haproxy'
+          ref: ${{ steps.tag.outputs.tag }}
+          path: 'haproxy'
+      - uses: actions/checkout@v3
+        if: startsWith(github.ref, 'refs/heads/')
+        with:
+          repository: 'haproxy/haproxy'
+          path: 'haproxy'
       - run: |
           ls
       - name: Set up Cygwin
@@ -70,17 +77,18 @@ jobs:
           cp haproxy.cfg release
           ls release
           tar -zcf haproxy-${{ steps.tag.outputs.tag }}.tar.gz release
+          ls
 
-      # - name: Create release and upload artifacts
-      #   if: startsWith(github.ref, 'refs/heads/')
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     sudo apt install -y fuse
-      #     wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
-      #     chmod +x pyuploadtool-x86_64.AppImage
-      #     ./pyuploadtool-x86_64.AppImage \
-      #     *.tar.gz
+      - name: Create release and upload artifacts
+        if: startsWith(github.ref, 'refs/heads/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt install -y fuse
+          wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
+          chmod +x pyuploadtool-x86_64.AppImage
+          ./pyuploadtool-x86_64.AppImage \
+          *.tar.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -88,7 +96,7 @@ jobs:
         with:
           # note you'll typically need to create a personal access token
           # with permissions to create releases in the other repo
-          name: v3.1.0
+          name: ${{ github.ref_name }}
           tag_name: ${{ steps.tag.outputs.tag }}
           files: |
             *.tar.gz
