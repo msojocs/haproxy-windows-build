@@ -22,18 +22,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Generate TAG Development
-        if: startsWith(github.ref, 'refs/heads/')
-        id: Tag
+      - name: Generate TAG
+        id: tag
         run: |
-          echo "tag=continuous" >> $env:GITHUB_OUTPUT
-          echo "name=Continuous Build" >> $env:GITHUB_OUTPUT
-      - name: Generate TAG Release
-        if: startsWith(github.ref, 'refs/tags/')
-        id: Tag
-        run: |
-          echo "tag=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
-          echo "name=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+          $tag = 'continuous'
+          $name = 'Continuous Build'
+          if ('${{ github.ref }}'.StartsWith('refs/tags/')) {
+            $tag = '${{ github.ref_name }}'
+            $name = '${{ github.ref_name }}'
+          }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "name=$name" >> $env:GITHUB_OUTPUT
+          Write-Host "tag result: $tag - $name"
 
       - uses: actions/checkout@v3
         if: startsWith(github.ref, 'refs/tags/')
@@ -46,6 +46,7 @@ jobs:
         with:
           repository: 'haproxy/haproxy'
           path: 'haproxy'
+
       - run: |
           ls
       - name: Set up Cygwin
